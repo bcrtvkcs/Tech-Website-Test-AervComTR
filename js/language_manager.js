@@ -182,6 +182,33 @@
          return false;
     }
 
+    let observer = null;
+
+    function startObserver() {
+        if (observer) return;
+        observer = new MutationObserver((mutations) => {
+            let shouldReapply = false;
+            let buttonMissing = !document.getElementById('lang-toggle-btn');
+
+            if (buttonMissing) {
+                insertButton();
+            }
+
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    shouldReapply = true;
+                    break;
+                }
+            }
+
+            if (shouldReapply && getLanguage() === 'tr') {
+                applyLanguage('tr');
+            }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     // Try multiple times if necessary in case React creates elements later
     function tryInit(attemptsLeft) {
         if (!document.getElementById('lang-toggle-btn') && !insertButton()) {
@@ -204,6 +231,7 @@
         }
 
         tryInit(20); // Try for up to 4 seconds
+        startObserver();
     }
 
     if (document.readyState === 'loading') {
