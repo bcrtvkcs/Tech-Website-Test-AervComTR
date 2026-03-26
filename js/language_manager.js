@@ -3,19 +3,13 @@
 
 (function() {
     const LANG_STORAGE_KEY = 'aeronix_lang';
-    const DEFAULT_LANG = 'en';
+    const DEFAULT_LANG = 'tr';
 
     // Helper to get current language
     function getLanguage() {
         try {
             const stored = localStorage.getItem(LANG_STORAGE_KEY);
             if (stored) return stored;
-
-            // Auto-detect Turkish
-            const browserLang = navigator.language || navigator.userLanguage;
-            if (browserLang && browserLang.startsWith('tr')) {
-                return 'tr';
-            }
         } catch (e) {
             console.error("Error accessing localStorage", e);
         }
@@ -166,6 +160,13 @@
 
              btn.appendChild(img);
 
+             // Ensure the container is flex to accommodate the new button properly
+             if (window.getComputedStyle(targetContainer).display !== 'flex') {
+                 targetContainer.style.display = 'flex';
+                 targetContainer.style.alignItems = 'center';
+                 targetContainer.style.gap = '8px';
+             }
+
              // Insert the language button BEFORE the theme toggle button within the flex container
              targetContainer.insertBefore(btn, themeBtn);
 
@@ -181,6 +182,17 @@
          return false;
     }
 
+    // Try multiple times if necessary in case React creates elements later
+    function tryInit(attemptsLeft) {
+        if (!document.getElementById('lang-toggle-btn') && !insertButton()) {
+             if (attemptsLeft > 0) {
+                 setTimeout(() => tryInit(attemptsLeft - 1), 200);
+             } else {
+                 console.error('Theme toggle button not found after retries!');
+             }
+        }
+    }
+
     function init() {
         if (!document.body.classList.contains('aeronix-text-anim-active')) {
             document.body.classList.add('aeronix-text-anim-active');
@@ -190,13 +202,14 @@
         if (currentLang === 'tr') {
              applyLanguage('tr');
         }
-        insertButton();
+
+        tryInit(20); // Try for up to 4 seconds
     }
 
-    if (document.readyState !== 'loading') {
-        init();
-    } else {
+    if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 0);
     }
 
 })();
