@@ -444,6 +444,8 @@ const tr_translations = {
     "Public Transport": "Toplu Taşıma",
     "Public Transport | AerVision Technologies": "Toplu Taşıma | AerVision Technologies",
     "Purpose-built technologies to enhance operations, intelligence, and access across industries.": "Sektörler genelinde operasyonları, istihbaratı ve erişimi geliştirmek için amaca yönelik teknolojiler.",
+    "Purpose-built technologies to enhance operations, intelligence, ve access across industries.": "Sektörler genelinde operasyonları, istihbaratı ve erişimi geliştirmek için amaca yönelik teknolojiler.",
+    "Purpose-built technologies to enhance operations, intelligence, ve access across industries": "Sektörler genelinde operasyonları, istihbaratı ve erişimi geliştirmek için amaca yönelik teknolojiler",
     "RETAIL": "PERAKENDE",
     "Read the AerVision Technologies Privacy Policy to understand how we collect, use, and protect your personal data when you interact with our products and services.": "Ürünlerimiz ve hizmetlerimizle etkileşime geçtiğinizde kişisel verilerinizi nasıl topladığımızı, kullandığımızı ve koruduğumuzu anlamak için AerVision Technologies Gizlilik Politikasını okuyun.",
     "Ready To Stop Unauthorized Access": "Yetkisiz Erişimi Durdurmaya Hazır",

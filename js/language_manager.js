@@ -53,6 +53,12 @@
                 document.body.classList.add('lang-tr-active');
             }
 
+            // Pre-sort translation keys by length descending to replace longest matches first
+            let sortedKeys = [];
+            if (typeof tr_translations !== 'undefined') {
+                sortedKeys = Object.keys(tr_translations).sort((a, b) => b.length - a.length);
+            }
+
             // Walk the DOM and replace text
             const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
             let node;
@@ -60,11 +66,43 @@
                 const parentTag = node.parentNode.tagName;
                 if (parentTag === 'SCRIPT' || parentTag === 'STYLE' || parentTag === 'NOSCRIPT') continue;
 
-                const text = node.nodeValue.trim();
-                if (text && typeof tr_translations !== 'undefined' && tr_translations[text]) {
-                    if (tr_translations[text].length > 0) {
-                        node.nodeValue = node.nodeValue.replace(text, tr_translations[text]);
+                // Important: get the original text (which may contain multiple sentences in one node due to React)
+                // We need to iterate over translation keys that might be embedded in the text node
+                const origText = node.nodeValue;
+                const trimmed = origText.trim();
+
+                if (!trimmed) continue;
+
+                if (typeof tr_translations !== 'undefined') {
+                    // Try exact match first
+                    if (tr_translations[trimmed] && tr_translations[trimmed].length > 0) {
+                        node.nodeValue = origText.replace(trimmed, tr_translations[trimmed]);
+                    } else {
+                        // Sometimes text is embedded or concatenated, so replace all known keys that exist in this node
+                        let newText = origText;
+
+                        for (const key of sortedKeys) {
+                            if (newText.includes(key) && tr_translations[key].length > 0) {
+                                // Escape string for regex to do global replace in node
+                                const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                const regex = new RegExp(escapeRegExp(key), 'g');
+                                newText = newText.replace(regex, tr_translations[key]);
+                            }
+                        }
+                        if (newText !== origText) {
+                            node.nodeValue = newText;
+                        }
                     }
+                }
+            }
+
+            // Fallback for React hydration breaking text across multiple sibling nodes (e.g. "Purpose-built technologies... ve...")
+            const paragraphs = document.querySelectorAll('p');
+            for (let i = 0; i < paragraphs.length; i++) {
+                const p = paragraphs[i];
+                const text = p.innerText || p.textContent;
+                if (text && text.includes('Purpose-built technologies to enhance operations')) {
+                    p.innerHTML = 'Sektörler genelinde operasyonları, istihbaratı ve erişimi geliştirmek için amaca yönelik teknolojiler.';
                 }
             }
 
@@ -187,41 +225,49 @@
     }
 
     let observer = null;
+    let debounceTimer = null;
 
-    function startObserver() {
-        if (observer) return;
-        observer = new MutationObserver((mutations) => {
-            let shouldReapply = false;
-            let buttonMissing = !document.getElementById('lang-toggle-btn');
+    function handleMutations(mutations) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const currentLang = getLanguage();
 
-            if (buttonMissing) {
-                insertButton();
-            }
+            // 1. Enforce Button Presence
+            insertButton();
 
+            // Update button state
+            updateToggleButton(currentLang);
+
+            if (currentLang === 'en') return;
+
+            // 2. Enforce Translation
+            // Let's do a simple check on the DOM to see if known English text has appeared or if we need to apply language to new nodes
+            let needsReapply = false;
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    shouldReapply = true;
+                    needsReapply = true;
+                    break;
+                } else if (mutation.type === 'characterData') {
+                    needsReapply = true;
                     break;
                 }
             }
 
-            if (shouldReapply && getLanguage() === 'tr') {
+            if (needsReapply) {
                 applyLanguage('tr');
             }
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
+        }, 50); // 50ms debounce for faster reaction
     }
 
-    // Try multiple times if necessary in case React creates elements later
-    function tryInit(attemptsLeft) {
-        if (!document.getElementById('lang-toggle-btn') && !insertButton()) {
-             if (attemptsLeft > 0) {
-                 setTimeout(() => tryInit(attemptsLeft - 1), 200);
-             } else {
-                 console.error('Theme toggle button not found after retries!');
-             }
-        }
+    function startObserver() {
+        if (observer) return;
+        observer = new MutationObserver(handleMutations);
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true // Watch for text changes from hydration
+        });
     }
 
     function init() {
@@ -233,15 +279,24 @@
         if (currentLang === 'tr') {
              applyLanguage('tr');
         }
+        insertButton();
 
-        tryInit(20); // Try for up to 4 seconds
+        // Start observer to catch React hydration and subsequent re-renders
         startObserver();
+
+        // Fallback interval checks for the first few seconds to ensure hydration is caught
+        let checks = 0;
+        const interval = setInterval(() => {
+             handleMutations([{ type: 'childList', addedNodes: [document.body] }]); // force check
+             checks++;
+             if (checks > 50) clearInterval(interval); // Stop checking after ~10 seconds
+        }, 200);
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+    if (document.readyState !== 'loading') {
+        init();
     } else {
-        setTimeout(init, 0);
+        document.addEventListener('DOMContentLoaded', init);
     }
 
 })();
