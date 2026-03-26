@@ -165,9 +165,13 @@
                  targetContainer.style.display = 'flex';
                  targetContainer.style.alignItems = 'center';
                  targetContainer.style.gap = '8px';
+             } else {
+                 // If it's already a flex container, ensure it has enough gap
+                 targetContainer.style.gap = '8px';
              }
 
              // Insert the language button BEFORE the theme toggle button within the flex container
+             btn.style.marginRight = '4px'; // Add explicit margin to separate from the theme button
              targetContainer.insertBefore(btn, themeBtn);
 
              btn.addEventListener('click', () => {
