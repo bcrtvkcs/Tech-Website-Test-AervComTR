@@ -104,6 +104,35 @@
                 if (text && text.includes('Purpose-built technologies to enhance operations')) {
                     p.innerHTML = 'Sektörler genelinde operasyonları, istihbaratı ve erişimi geliştirmek için amaca yönelik teknolojiler.';
                 }
+
+            }
+
+            // More aggressive fallback for text split over text nodes that `innerText` misses easily
+            if (document.body.innerHTML && document.body.innerHTML.includes("we believe innovation should be practical")) {
+                document.body.innerHTML = document.body.innerHTML.replace(
+                    /, we believe innovation should be practical\. We’re committed to creating intelligent systems that solve real-world problems — from enhancing public safety to streamlining critical workflows\./g,
+                    ", inovasyonun pratik olması gerektiğine inanıyoruz. Kamu güvenliğini artırmaktan kritik iş akışlarını basitleştirmeye kadar gerçek dünyadaki sorunları çözen akıllı sistemler oluşturmaya kararlıyız."
+                );
+            }
+
+            // Also check for the exact chunk of text that React pushes to the DOM.
+            const pNodes = document.querySelectorAll('p');
+            for (let i = 0; i < pNodes.length; i++) {
+                const p = pNodes[i];
+
+                if (p.textContent && p.textContent.includes('we believe innovation should be practical')) {
+                     if (p.innerHTML.includes('<strong>AerVision</strong>')) {
+                         p.innerHTML = 'At <strong>AerVision</strong>, inovasyonun pratik olması gerektiğine inanıyoruz. Kamu güvenliğini artırmaktan kritik iş akışlarını basitleştirmeye kadar gerçek dünyadaki sorunları çözen akıllı sistemler oluşturmaya kararlıyız.';
+                     } else {
+                         p.innerHTML = 'AerVision olarak inovasyonun pratik olması gerektiğine inanıyoruz. Kamu güvenliğini artırmaktan kritik iş akışlarını basitleştirmeye kadar gerçek dünyadaki sorunları çözen akıllı sistemler oluşturmaya kararlıyız.';
+                     }
+                }
+
+                if (p.textContent && p.textContent.includes('make environments safer, smarter, and more efficient')) {
+                    if (!p.textContent.includes('Misyonumuz')) {
+                        p.innerHTML = 'Misyonumuz, yapay zeka destekli teknolojilerle ortamları daha güvenli, daha akıllı ve daha verimli hale getirmektir.';
+                    }
+                }
             }
 
             // Handle attributes
