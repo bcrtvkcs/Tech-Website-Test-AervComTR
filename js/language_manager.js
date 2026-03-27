@@ -264,6 +264,11 @@
     let debounceTimer = null;
 
     function handleMutations(mutations) {
+        // Enforce animation class synchronously against fast hydration wipes
+        if (!document.body.classList.contains('aeronix-text-anim-active')) {
+            document.body.classList.add('aeronix-text-anim-active');
+        }
+
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             const currentLang = getLanguage();
