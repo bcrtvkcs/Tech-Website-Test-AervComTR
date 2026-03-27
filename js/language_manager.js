@@ -24,7 +24,13 @@
         } catch(e) { console.error(e); }
 
         if (lang === 'en') {
-             location.reload();
+             // We can trigger the text animation immediately before reloading,
+             // or let the reload naturally trigger `init()` which now calls `replayTextAnimation()`.
+             // However, to make it visually pleasing without the harsh jump:
+             replayTextAnimation();
+             setTimeout(() => {
+                 location.reload();
+             }, 350); // wait for animation before reload
         } else {
              applyLanguage(lang);
              updateToggleButton(lang);
@@ -301,9 +307,14 @@
     }
 
     function init() {
+        // Always ensure the animation class is added on initial load
         if (!document.body.classList.contains('aeronix-text-anim-active')) {
             document.body.classList.add('aeronix-text-anim-active');
         }
+
+        // Force the replay logic to guarantee text anim fires even when navigating to subpages
+        // or when staying in English.
+        replayTextAnimation();
 
         const currentLang = getLanguage();
         if (currentLang === 'tr') {
