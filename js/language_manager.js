@@ -238,7 +238,8 @@
              }
 
              // Insert the language button BEFORE the theme toggle button within the flex container
-             btn.style.marginRight = '4px'; // Add explicit margin to separate from the theme button
+             // Margin removed, using gap-2 on parent container instead
+             // btn.style.marginRight = '4px'; // Add explicit margin to separate from the theme button
              targetContainer.insertBefore(btn, themeBtn);
 
              btn.addEventListener('click', () => {
